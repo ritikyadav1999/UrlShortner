@@ -11,6 +11,7 @@ import org.example.urlshortner.util.NanoIdGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ public class ShortUrlService {
     private final ShortUrlRepo shortUrlRepo;
     private final UserRepo userRepo;
     private final NanoIdGenerator nanoIdGenerator;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public ShortUrl createShortUrl(CreateShortUrlRequest request, User user) {
 
@@ -61,8 +63,22 @@ public class ShortUrlService {
         if(shortUrlOptional.isEmpty()){
             throw new RuntimeException("Url does not exist");
         }
+
+        String redisKey = "shortUrl:" + shortCode;
+        String cachedValue = redisTemplate.opsForValue().get(redisKey);
+
+        if(cachedValue != null){
+            System.out.println("Cache Hit");
+            return cachedValue;
+        }
+        else
+            System.out.println("Cache Miss");
+
         ShortUrl shortUrl = shortUrlOptional.get();
         shortUrl.setClickCount(shortUrl.getClickCount()+1);
+
+        redisTemplate.opsForValue().set(redisKey,shortUrl.getOriginalUrl());
+
         return  shortUrlRepo.save(shortUrl).getOriginalUrl();
     }
 
