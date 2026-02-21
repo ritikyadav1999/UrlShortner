@@ -46,6 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
 
+        System.out.println("checkpoint 2");
         filterChain.doFilter(request,response);
 
     }
