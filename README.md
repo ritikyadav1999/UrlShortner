@@ -1,150 +1,139 @@
-🚀 Scalable URL Shortener (Spring Boot + Redis)
+# 🚀 Scalable URL Shortener (Spring Boot + Redis)
 
-A production-oriented URL Shortener built with Spring Boot, Redis, Docker, and JPA, designed with real backend engineering principles such as caching, write-behind analytics, and durability.
+A production-oriented URL Shortener built using **Spring Boot, Redis, Docker, and JPA**, designed with real backend engineering principles such as caching, write-behind analytics, and durability.
 
-This project focuses on scalability, performance, and system design thinking, not just CRUD functionality.
+This project focuses on **performance, scalability, and clean system design**, not just CRUD functionality.
 
-✨ Features
+---
 
-🔗 Shorten long URLs
+## ✨ Features
 
-🔁 Fast redirection using Redis cache
+- 🔗 Generate short URLs
+- 🔁 Fast redirection using Redis cache
+- 📊 High-performance click tracking
+- ⚡ Optimized for read-heavy workloads
+- 🔄 Background batch sync to database
+- 💾 Redis durability using AOF
+- 🧠 Clean separation of read and write concerns
 
-📊 High-performance click tracking
+---
 
-⚡ Read-heavy workload optimization
+## 🏗 Architecture Overview
 
-🔄 Background batch sync to database
+### Request Flow
 
-💾 Redis durability using AOF
-
-🧠 Clean separation of read and write concerns
-
-🏗 Architecture Overview
-
-Request Flow
-
-User
-↓
-Spring Boot Application
-↓
-Redis (Cache Layer)
-↓
-Redis (Atomic Click Counter)
-↓
+User  
+↓  
+Spring Boot Application  
+↓  
+Redis (Cache Layer)  
+↓  
+Redis (Atomic Click Counter)  
+↓  
 Database (Periodic Sync)
 
-⚡ Caching Strategy (Cache-Aside Pattern)
+---
+
+## ⚡ Caching Strategy (Cache-Aside Pattern)
 
 On redirect:
 
-Check Redis first
+1. Check Redis for `shortUrl:<shortCode>`
+2. If cache miss → fetch from DB
+3. Store in Redis (TTL = 24 hours)
+4. Return original URL
 
-If cache miss → fetch from DB
+### Why?
 
-Store in Redis (TTL = 24 hours)
+- Reduces database load
+- Improves latency
+- Handles traffic spikes efficiently
 
-Namespaced keys:
+---
 
-shortUrl:<shortCode>
+## 📊 Click Tracking (Write Optimization)
 
-Why?
+Instead of updating the database on every redirect:
 
-Reduces DB load
+- Uses Redis `INCR` for atomic click counting
+- Stores counters as: clickCount:<shortCode>
 
-Improves latency
 
-Handles traffic spikes efficiently
 
-📊 Click Tracking (Write Optimization)
+A scheduled background job (every 5 minutes):
 
-Instead of updating the DB on every redirect:
+- Reads Redis click counters
+- Adds counts to DB
+- Deletes Redis keys after sync
 
-Uses Redis INCR for atomic counting
+**Pattern Used:** Write-Behind / Eventual Consistency
 
-Stores counters as:
+---
 
-clickCount:<shortCode>
+## 💾 Redis Durability
 
-Background job runs every 5 minutes:
-
-Reads Redis counters
-
-Adds to DB
-
-Deletes Redis keys
-
-Pattern Used: Write-Behind / Eventual Consistency
-
-💾 Redis Durability
-
-Redis runs with AOF (Append Only File) enabled:
-
+Redis runs with **AOF (Append Only File)** enabled:
 redis-server --appendonly yes
 
-Ensures:
 
-Write operations are logged to disk
 
-Data survives Redis restarts
+This ensures:
 
-Click counters are durable
+- Write operations are logged to disk
+- Data survives Redis restarts
+- Click counters are durable
 
-🧠 Engineering Concepts Implemented
+---
 
-Cache-aside pattern
+## 🧠 Engineering Concepts Implemented
 
-Atomic operations (Redis INCR)
+- Cache-aside pattern
+- Redis atomic operations (`INCR`)
+- Write-behind batch processing
+- Eventual consistency
+- Separation of read and write paths
+- Graceful degradation (DB fallback if Redis fails)
+- Redis persistence (AOF)
+- Scheduled background jobs
 
-Write-behind batch processing
+---
 
-Eventual consistency
+## 🛠 Tech Stack
 
-Separation of read and write paths
+- Java 17
+- Spring Boot
+- Spring Data JPA
+- Redis
+- Docker
+- MySQL / PostgreSQL
 
-Graceful degradation (DB fallback if Redis fails)
+---
 
-Redis persistence (AOF)
+## 🚀 Running the Project
 
-Scheduled background jobs
+### 1️⃣ Start Redis (with persistence)
 
-🛠 Tech Stack
-
-Java 17
-
-Spring Boot
-
-Spring Data JPA
-
-Redis
-
-Docker
-
-MySQL / PostgreSQL
-
-🚀 Running the Project
-1️⃣ Start Redis (with persistence)
+```bash
 docker run -d \
   --name redis-container \
   -p 6379:6379 \
   -v redis-data:/data \
   redis redis-server --appendonly yes
-2️⃣ Run Spring Boot
+
+
+Run SprintBoot
 mvn spring-boot:run
-📌 Why This Project Stands Out
 
-Most URL shorteners stop at DB storage and redirect.
+Why This Project Stands Out
 
-This implementation demonstrates:
+Most URL shortener implementations stop at saving data and redirecting.
 
-Real-world scalability patterns
+This project demonstrates:
 
-Performance optimization
+Real-world performance optimization
+
+Scalable architecture patterns
 
 Distributed system fundamentals
 
 Production-aware backend design
-
-👨‍💻 Author
-
-Built to practice and demonstrate advanced backend engineering and system design concepts.
