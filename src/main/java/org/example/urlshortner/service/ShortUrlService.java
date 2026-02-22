@@ -13,9 +13,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -69,6 +71,7 @@ public class ShortUrlService {
 
         if(cachedValue != null){
             System.out.println("Cache Hit");
+            redisTemplate.opsForValue().increment("clickCount:" +  shortCode );
             return cachedValue;
         }
         else
@@ -87,6 +90,40 @@ public class ShortUrlService {
     ){
         System.out.println("Checkpoint : getUserUrls Service");
         return shortUrlRepo.findByUser_Id(userId, pageable);
+    }
+
+    @Scheduled(fixedRate = 30000)
+    public void syncClickCount(){
+        Set<String> keys = redisTemplate.keys("clickCount:*");
+        if(keys==null || keys.isEmpty()){
+            return;
+        }
+        for(String key:keys){
+            String shortcode = key.replace("clickCount:","");
+            String countString   = redisTemplate.opsForValue().get(key);
+
+            System.out.println(countString + ": " + countString);
+
+            if(countString==null || countString.isEmpty()){
+                continue;
+            }
+
+            long count = Long.parseLong(countString);
+
+            ShortUrl shortUrl = shortUrlRepo.findByShortCode(shortcode).orElse(null);
+
+            if(shortUrl==null){
+                continue;
+            }
+
+            shortUrl.setClickCount(shortUrl.getClickCount()+count);
+            shortUrlRepo.save(shortUrl);
+
+            redisTemplate.delete(key);
+            System.out.println("Synced click count for:" + shortcode);
+
+
+        }
     }
 
 
