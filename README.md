@@ -119,21 +119,15 @@ docker run -d \
   -p 6379:6379 \
   -v redis-data:/data \
   redis redis-server --appendonly yes
+  
+```
 
 
-Run SprintBoot
-mvn spring-boot:run
+### Why This Project Stands Out
 
-Why This Project Stands Out
-
-Most URL shortener implementations stop at saving data and redirecting.
-
-This project demonstrates:
-
-Real-world performance optimization
-
-Scalable architecture patterns
-
-Distributed system fundamentals
-
-Production-aware backend design
+-Most URL shortener implementations stop at saving data and redirecting.
+-This project demonstrates:
+-Real-world performance optimization
+-Scalable architecture patterns
+-Distributed system fundamentals
+-Production-aware backend design
